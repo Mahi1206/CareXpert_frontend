@@ -4,28 +4,71 @@ Thank you for your interest in contributing to **CareXpert** as part of the **GD
 
 ---
 
-## 🚨 Contribution Rules
+## 🚨 Contribution Rules (Strict Enforcement)
 
 > **Read this section carefully before doing anything. Violations will result in your PR being closed without review.**
 
 - ❌ **Do NOT open PRs for issues unless you are officially assigned**
-- ❌ **Do NOT create new issues** — issues are created and managed only by organizers
+- ❌ **Do NOT create new issues** - issues are created and managed only by organizers
 - ❌ **PRs without a linked issue (or team number) will be closed immediately**
 - ❌ **PRs for unassigned issues will be closed without merging**
-- ✅ **One issue per contributor at a time** — finish and submit before picking another
-- ✅ **Only maintainers can merge PRs** — do not ask others to merge your PR
+- ❌ **Do NOT self-assign issues**
+- ✅ **One issue per contributor at a time** - finish and submit before picking another
+- ✅ **Only maintainers can assign, review, and merge PRs** - do not ask others to merge your PR
 - ✅ **Every PR must include your Team Number** in the description
-- ✅ **General improvement PRs** (bug fixes or enhancements outside existing issues) are allowed but reviewed strictly — you must still include your team number and clearly explain the change
+- ✅ **General improvement PRs** (bug fixes or enhancements outside existing issues) are allowed but reviewed strictly - you must still include your team number and clearly explain the change
 
 ---
 
 ## 📌 Issue Policy
 
-- Issues are **created and managed only by organizers** — do not open your own issues
-- To work on an issue, **comment on it requesting assignment** (e.g., *"I'd like to work on this, Team 07"*)
+- Issues are **created and managed only by organizers** - do not open your own issues
+- To work on an issue, **comment on it requesting assignment** (e.g., *"I'd like to work on this, Team XX"*)
 - **Wait for a maintainer to officially assign you** before writing any code
-- Once assigned, you must submit your PR within **3–5 days** or the issue will be reassigned
+- Once assigned, you must submit your PR within **3-5 days** or the issue will be reassigned
 - If you're stuck or unavailable, **comment on the issue** so maintainers can help or reassign
+
+---
+
+## 🚀 Reporting Bugs or Proposing Improvements
+
+As part of this competition, **participants are not permitted to create new issues** in the repository.
+
+If you identify:
+
+- A functional bug  
+- A UI/UX inconsistency  
+- A documentation error  
+- A minor or major enhancement  
+- A refactor that improves code quality or maintainability  
+
+You must **submit a Pull Request directly**.
+
+---
+
+### 📌 Important Guidelines
+
+- ❌ Do **not** open a new issue for such findings.  
+- ✅ Submit a Pull Request with a clear and structured description.  
+- ✅ Include your **Team Number** in the PR description.  
+- ✅ Clearly explain the problem and the rationale behind your proposed change.  
+- ✅ Attach screenshots if the change affects UI.  
+
+These submissions will be treated as **General Improvement Pull Requests** and will undergo **strict review** to ensure:
+
+- Relevance to project scope  
+- Code quality and maintainability  
+- No unintended side effects  
+- Compliance with project standards  
+
+Maintainers reserve the right to close any PR that is:
+
+- Trivial or low-effort  
+- Outside the intended scope  
+- Poorly documented  
+- Not aligned with repository standards  
+
+Please ensure that your contribution is meaningful, well-tested, and professionally presented.
 
 ---
 
@@ -76,14 +119,14 @@ This project uses:
 Before you begin, ensure you have the following installed:
 
 - [Node.js](https://nodejs.org/) (v18 or higher)
-- [pnpm](https://pnpm.io/installation) — install it via:
+- [pnpm](https://pnpm.io/installation) - install it via:
   ```bash
   npm install -g pnpm
   ```
 - [Git](https://git-scm.com/)
 - A code editor (VS Code recommended)
 
-> ⚠️ **This project uses `pnpm` as the package manager.** Do not use `npm install` or `yarn` — it will create the wrong lockfile and your PR will be rejected.
+> ⚠️ **This project uses `pnpm` as the package manager.** Do not use `npm install` or `yarn` - it will create the wrong lockfile and your PR will be rejected.
 
 ---
 
@@ -119,8 +162,8 @@ git remote -v
 ```
 
 You should see:
-- `origin` — your fork (`https://github.com/YOUR-USERNAME/CareXpert_frontend.git`)
-- `upstream` — the original repository (`https://github.com/gdg-charusat/CareXpert_frontend.git`)
+- `origin` - your fork (`https://github.com/YOUR-USERNAME/CareXpert_frontend.git`)
+- `upstream` - the original repository (`https://github.com/gdg-charusat/CareXpert_frontend.git`)
 
 ### Step 4: Install Dependencies
 
@@ -151,11 +194,11 @@ git checkout -b feature/your-feature-name
 ```
 
 **Branch Naming Convention:**
-- `feature/` — for new features (e.g., `feature/add-appointment-page`)
-- `fix/` — for bug fixes (e.g., `fix/navbar-responsive`)
-- `docs/` — for documentation changes (e.g., `docs/update-readme`)
-- `style/` — for styling changes (e.g., `style/improve-button-design`)
-- `refactor/` — for code refactoring (e.g., `refactor/optimize-components`)
+- `feature/` - for new features (e.g., `feature/add-appointment-page`)
+- `fix/` - for bug fixes (e.g., `fix/navbar-responsive`)
+- `docs/` - for documentation changes (e.g., `docs/update-readme`)
+- `style/` - for styling changes (e.g., `style/improve-button-design`)
+- `refactor/` - for code refactoring (e.g., `refactor/optimize-components`)
 
 ---
 
@@ -165,11 +208,11 @@ git checkout -b feature/your-feature-name
 
 - Browse the [Issues](https://github.com/gdg-charusat/CareXpert_frontend/issues) page
 - Look for issues labeled:
-  - `good-first-issue` or `beginner` — for beginners (Level 1)
-  - `intermediate` — for intermediate level (Level 2)
+  - `good-first-issue` or `beginner` - for beginners (Level 1)
+  - `intermediate` - for intermediate level (Level 2)
 - **Comment on the issue** with your request and team number, e.g.:
-  > *"Hi, I'd like to work on this issue. — Team 07"*
-- **Wait to be officially assigned** — do not start writing any code until a maintainer assigns you
+  > *"Hi, I'd like to work on this issue. - Team 07"*
+- **Wait to be officially assigned** - do not start writing any code until a maintainer assigns you
 - **Do not work on an issue already assigned to someone else**
 
 ### 2. Make Your Changes
@@ -201,13 +244,13 @@ git commit -m "feat: add appointment booking page"
 ```
 
 **Commit Message Format:**
-- `feat:` — new feature (e.g., `feat: add doctor profile card`)
-- `fix:` — bug fix (e.g., `fix: resolve navbar mobile responsiveness`)
-- `docs:` — documentation changes (e.g., `docs: update installation guide`)
-- `style:` — formatting, CSS changes (e.g., `style: improve button hover effects`)
-- `refactor:` — code restructuring (e.g., `refactor: simplify form validation logic`)
-- `test:` — adding tests (e.g., `test: add unit tests for booking flow`)
-- `chore:` — maintenance tasks (e.g., `chore: update dependencies`)
+- `feat:` - new feature (e.g., `feat: add doctor profile card`)
+- `fix:` - bug fix (e.g., `fix: resolve navbar mobile responsiveness`)
+- `docs:` - documentation changes (e.g., `docs: update installation guide`)
+- `style:` - formatting, CSS changes (e.g., `style: improve button hover effects`)
+- `refactor:` - code restructuring (e.g., `refactor: simplify form validation logic`)
+- `test:` - adding tests (e.g., `test: add unit tests for booking flow`)
+- `chore:` - maintenance tasks (e.g., `chore: update dependencies`)
 
 **Examples of Good Commit Messages:**
 ```bash
@@ -230,8 +273,8 @@ git push origin feature/your-feature-name
 2. Click **"Compare & pull request"** button
 3. Fill out the PR template completely:
    - **Title**: Clear, descriptive title (e.g., `feat: add appointment booking page`)
-   - **Team Number**: You **must** state your team number (e.g., `Team 07`) — PRs without this will be closed
-   - **Issue Reference**: Link the assigned issue (e.g., `Closes #42`) — PRs without a linked issue will be closed unless it's a general improvement PR
+   - **Team Number**: You **must** state your team number (e.g., `Team 07`) - PRs without this will be closed
+   - **Issue Reference**: Link the assigned issue (e.g., `Closes #42`) - PRs without a linked issue will be closed unless it's a general improvement PR
    - **Description**: Explain what changes you made and why
    - **Screenshots**: Add before/after screenshots if UI changes are involved
 4. Click **"Create pull request"**
@@ -264,8 +307,8 @@ Issues are categorized by difficulty level and **created exclusively by organize
 
 1. Find an unassigned issue you want to work on
 2. **Comment on the issue** with this format:
-   > *"I'd like to work on this. — Team [your team number]"*
-3. **Wait for a maintainer to assign it to you** — this is mandatory
+   > *"I'd like to work on this. - Team [your team number]"*
+3. **Wait for a maintainer to assign it to you** - this is mandatory
 4. Once assigned, start working and submit your PR within **3–5 days**
 5. If you can't complete it in time, comment to let maintainers know
 
@@ -275,11 +318,11 @@ Issues are categorized by difficulty level and **created exclusively by organize
 
 ## 🔄 Pull Request Process
 
-### PR Requirements — Non-Negotiable
+### PR Requirements - Non-Negotiable
 
 > PRs that don't meet ALL of the following will be **closed without review**:
 
-- [ ] **Team number stated** in the PR description (e.g., `Team 07`)
+- [ ] **Team number stated** in the PR description (e.g., `Team XX`)
 - [ ] **Linked to your assigned issue** via `Closes #issue-number` (unless it's a general improvement PR)
 - [ ] **You are the assigned contributor** for that issue
 - [ ] PR is raised **after** assignment, not before
@@ -290,7 +333,7 @@ Issues are categorized by difficulty level and **created exclusively by organize
 - [ ] Code runs without errors (`pnpm dev` works)
 - [ ] Project builds successfully (`pnpm build`)
 - [ ] All new components are properly typed (TypeScript)
-- [ ] Tailwind CSS classes used — no inline styles
+- [ ] Tailwind CSS classes used - no inline styles
 - [ ] Tested on different screen sizes
 - [ ] No console errors or warnings
 - [ ] Commit messages follow the conventional format
@@ -298,9 +341,9 @@ Issues are categorized by difficulty level and **created exclusively by organize
 ### PR Review Process
 
 1. A maintainer will review your PR within 24–48 hours
-2. You may be asked to make changes — respond promptly
+2. You may be asked to make changes - respond promptly
 3. Make requested changes and push to the same branch (PR auto-updates)
-4. **Only maintainers can approve and merge** — do not request peers to merge
+4. **Only maintainers can approve and merge** - do not request peers to merge
 
 ### Addressing Review Comments
 
@@ -341,14 +384,9 @@ If you want to fix a bug or add a small improvement that isn't part of an existi
 
 ---
 
-## 📜 Code of Conduct
-
-Please be respectful and professional in all interactions. We're here to learn and help each other grow.
-
----
-
 **Happy Coding! 🚀**
 
 If you have any questions or need clarification, feel free to reach out to the maintainers or ask in the issue comments.
 
 Thank you for contributing to CareXpert!
+
