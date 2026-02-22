@@ -20,10 +20,11 @@ import {
   DialogTitle,
   DialogFooter,
 } from "../components/ui/dialog";
-import { Search, MapPin, Clock, Filter, Heart, Video, User, Loader2 } from "lucide-react";
+import { Search, MapPin, Clock, Filter, Heart, Video, User, Loader2, Stethoscope } from "lucide-react";
 import { toast } from "sonner";
 import axios from "axios";
 import { useAuthStore } from "@/store/authstore";
+import EmptyState from "@/components/EmptyState";
 
 
 type FindDoctors = {
@@ -66,9 +67,7 @@ export default function DoctorsPage() {
   const [selectedLocation, setSelectedLocation] = useState("all");
   const [doctors , setDoctors] = useState<FindDoctors[]>([]);
   
-//fix1
   const [debouncedSearch, setDebouncedSearch] = useState("");
-const [isSearching, setIsSearching] = useState(false);
   // Booking dialog state
   const [isBookingDialogOpen, setIsBookingDialogOpen] = useState(false);
   const [selectedDoctor, setSelectedDoctor] = useState<FindDoctors | null>(null);
@@ -155,7 +154,6 @@ useEffect(() => {
     "Miami, FL",
     "Seattle, WA",
   ];
-//fix 3
   const filteredDoctors = doctors.filter((doctor) => {
     const matchesSearch =
       doctor.user.name.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
@@ -167,13 +165,6 @@ useEffect(() => {
 
     return matchesSearch && matchesSpecialty && matchesLocation;
   });
-  const matchesSpecialty =
-    selectedSpecialty === "all" || doctor.specialty === selectedSpecialty;
-  const matchesLocation =
-    selectedLocation === "all" || doctor.clinicLocation === selectedLocation;
-
-  return matchesSpecialty && matchesLocation;
-});
 
   const openBookingDialog = (doctor: FindDoctors) => {
     if (!user || user.role !== "PATIENT") {
@@ -336,9 +327,22 @@ useEffect(() => {
 </div>
 
         {/* Doctor Cards */}
-        <div className="grid gap-6">
-          {filteredDoctors.map((doctor) => (
-            <Card
+        {!isSearching && filteredDoctors.length === 0 ? (
+          <EmptyState
+            title="No Doctors Available Yet"
+            description="We couldn't find any doctors matching your search criteria. Try adjusting your filters or check back later as new doctors join our platform."
+            icon={<Stethoscope className="h-8 w-8" />}
+            ctaLabel="Clear Filters"
+            onCtaClick={() => {
+              setSearchQuery("");
+              setSelectedSpecialty("all");
+              setSelectedLocation("all");
+            }}
+          />
+        ) : (
+          <div className="grid gap-6">
+            {filteredDoctors.map((doctor) => (
+              <Card
               key={doctor.id}
               className="overflow-hidden hover:shadow-lg transition-shadow"
             >
@@ -434,17 +438,14 @@ useEffect(() => {
                         <Heart className="h-4 w-4 mr-2" />
                         Book Appointment
                       </Button>
-
-                      
-
-
                     </div>
                   </div>
                 </div>
               </CardContent>
             </Card>
           ))}
-        </div>
+          </div>
+        )}
       </div>
 
       {/* Booking Dialog */}
