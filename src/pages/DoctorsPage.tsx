@@ -4,6 +4,7 @@ import { Input } from "../components/ui/input";
 import { Card, CardContent } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
+import { SearchX } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -67,7 +68,6 @@ export default function DoctorsPage() {
   const [selectedLocation, setSelectedLocation] = useState("all");
   const [doctors , setDoctors] = useState<FindDoctors[]>([]);
   
-  const [debouncedSearch, setDebouncedSearch] = useState("");
   // Booking dialog state
   const [isBookingDialogOpen, setIsBookingDialogOpen] = useState(false);
   const [selectedDoctor, setSelectedDoctor] = useState<FindDoctors | null>(null);
@@ -83,38 +83,22 @@ export default function DoctorsPage() {
   const user = useAuthStore((state) => state.user);
   const url = `${import.meta.env.VITE_BASE_URL}/api/patient`;
 //fix2
- useEffect(() => {
+useEffect(() => {
+  setIsSearching(true);
+
   const timer = setTimeout(() => {
-    setDebouncedSearch(searchQuery);
+    setDebouncedSearchQuery(searchQuery);
   }, 400);
 
   return () => clearTimeout(timer);
 }, [searchQuery]);
-
 useEffect(() => {
   const fetchDoctors = async () => {
     try {
-      setIsSearching(true);
-
-  // Debounce search query
-  useEffect(() => {
-    if (searchQuery !== debouncedSearchQuery) {
-      setIsSearching(true);
-    }
-
-    const timer = setTimeout(() => {
-      setDebouncedSearchQuery(searchQuery);
-      setIsSearching(false);
-    }, 400);
-
-    return () => {
-      clearTimeout(timer);
-    };
-  }, [searchQuery]);
       const res = await axios.get<FindDoctorsApiResponse>(
         `${url}/fetchAllDoctors`,
         {
-          params: { search: debouncedSearch },
+          params: { search: debouncedSearchQuery },
           withCredentials: true,
         }
       );
@@ -134,7 +118,8 @@ useEffect(() => {
   };
 
   fetchDoctors();
-}, [debouncedSearch]);
+}, [debouncedSearchQuery]);
+  
   const specialties = [
     "Cardiology",
     "Dermatology",
@@ -154,6 +139,7 @@ useEffect(() => {
     "Miami, FL",
     "Seattle, WA",
   ];
+
   const filteredDoctors = doctors.filter((doctor) => {
     const matchesSearch =
       doctor.user.name.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
@@ -218,7 +204,7 @@ useEffect(() => {
       }
     } catch (err) {
       if (axios.isAxiosError(err) && err.response) {
-        toast.error(err.response.data?.message || "Failed to ppiunppointment");
+        toast.error(err.response.data?.message || "Failed to book an appointment");
       } else {
         toast.error("An unexpected error occurred");
       }
@@ -368,11 +354,6 @@ useEffect(() => {
                           <h3 className="text-xl font-semibold text-gray-900 dark:text-white truncate">
                             {doctor.user.name}
                           </h3>
-                          {/* {doctor.verified && (
-                            <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 flex-shrink-0">
-                              Verified
-                            </Badge>
-                          )} */}
                         </div>
 
                         <p className="text-blue-600 dark:text-blue-400 font-medium mb-2">
@@ -446,6 +427,7 @@ useEffect(() => {
           ))}
           </div>
         )}
+        
       </div>
 
       {/* Booking Dialog */}
