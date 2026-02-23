@@ -24,32 +24,24 @@ export default function Login() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    try{
-      const res = await axios.post(`${import.meta.env.VITE_BASE_URL}/api/user/login` ,{data : email , password} , {
-        withCredentials : true
-      });
-      if(res.data.success){
-        useAuthStore.getState().setUser({
-          id : res.data.data.id,
-          name : res.data.data.name,
-          email : res.data.data.email,
-          profilePicture : res.data.data.profilePicture,
-          role : res.data.data.role,
-          refreshToken : res.data.data.refreshToken
-        })
-
-        if(res.data.data.role === "PATIENT"){
+    try {
+      await useAuthStore.getState().login(email, password);
+      
+      const user = useAuthStore.getState().user;
+      if (user) {
+        if (user.role === "PATIENT") {
           navigate("/dashboard/patient");
-        }else{
-          navigate("/dashboard/doctor")
+        } else if (user.role === "DOCTOR") {
+          navigate("/dashboard/doctor");
+        } else if (user.role === "ADMIN") {
+          navigate("/admin");
         }
       }
-      // console.log(res.data.data)
-    }catch(err){
-      if(axios.isAxiosError(err) && err.response){
-        toast.error(err.response.data?.message || "Something went wrong");
-      }else{
-        toast.error("Unknown error occured..")
+    } catch (err) {
+      if (err instanceof Error) {
+        toast.error(err.message);
+      } else {
+        toast.error("Unknown error occurred");
       }
     }
     // Simulate login based on demo emails
