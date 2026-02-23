@@ -4,6 +4,7 @@ import { Input } from "../components/ui/input";
 import { Card, CardContent } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
+import { SearchX } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -20,10 +21,11 @@ import {
   DialogTitle,
   DialogFooter,
 } from "../components/ui/dialog";
-import { Search, MapPin, Clock, Filter, Heart, Video, User, Loader2 } from "lucide-react";
+import { Search, MapPin, Clock, Filter, Heart, Video, User, Loader2, Stethoscope } from "lucide-react";
 import { toast } from "sonner";
 import axios from "axios";
 import { useAuthStore } from "@/store/authstore";
+import EmptyState from "@/components/EmptyState";
 
 
 type FindDoctors = {
@@ -199,7 +201,7 @@ export default function DoctorsPage() {
       }
     } catch (err) {
       if (axios.isAxiosError(err) && err.response) {
-        toast.error(err.response.data?.message || "Failed to ppiunppointment");
+        toast.error(err.response.data?.message || "Failed to book an appointment");
       } else {
         toast.error("An unexpected error occurred");
       }
@@ -308,9 +310,22 @@ export default function DoctorsPage() {
         </div>
 
         {/* Doctor Cards */}
-        <div className="grid gap-6">
-          {filteredDoctors.map((doctor) => (
-            <Card
+        {!isSearching && filteredDoctors.length === 0 ? (
+          <EmptyState
+            title="No Doctors Available Yet"
+            description="We couldn't find any doctors matching your search criteria. Try adjusting your filters or check back later as new doctors join our platform."
+            icon={<Stethoscope className="h-8 w-8" />}
+            ctaLabel="Clear Filters"
+            onCtaClick={() => {
+              setSearchQuery("");
+              setSelectedSpecialty("all");
+              setSelectedLocation("all");
+            }}
+          />
+        ) : (
+          <div className="grid gap-6">
+            {filteredDoctors.map((doctor) => (
+              <Card
               key={doctor.id}
               className="overflow-hidden hover:shadow-lg transition-shadow"
             >
@@ -336,11 +351,6 @@ export default function DoctorsPage() {
                           <h3 className="text-xl font-semibold text-gray-900 dark:text-white truncate">
                             {doctor.user.name}
                           </h3>
-                          {/* {doctor.verified && (
-                            <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 flex-shrink-0">
-                              Verified
-                            </Badge>
-                          )} */}
                         </div>
 
                         <p className="text-blue-600 dark:text-blue-400 font-medium mb-2">
@@ -416,7 +426,9 @@ export default function DoctorsPage() {
               </CardContent>
             </Card>
           ))}
-        </div>
+          </div>
+        )}
+        
       </div>
 
       {/* Booking Dialog */}
