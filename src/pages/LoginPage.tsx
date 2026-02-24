@@ -14,24 +14,26 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
+
     try {
+      // Using the centralized api instance
       const response = await api.post(
         "/api/auth/login",
-        {
-          email,
-          password,
-        }
+        { email, password }
       );
 
       localStorage.setItem("token", response.data.token);
       navigate("/dashboard/patient");
     } catch (error) {
       setError("Invalid credentials");
-      console.error("Login error:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -62,8 +64,8 @@ export default function LoginPage() {
               />
             </div>
             {error && <p className="text-red-500 text-sm">{error}</p>}
-            <Button type="submit" className="w-full">
-              Login
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? "Logging in..." : "Login"}
             </Button>
           </form>
         </CardContent>
