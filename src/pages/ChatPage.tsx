@@ -44,6 +44,7 @@ import {
   loadRoomChatHistory as _loadRoomChatHistory,
 } from "@/sockets/socket";
 import { useAuthStore } from "@/store/authstore";
+import { relativeTime } from "@/lib/utils";
 
 type DoctorData = {
   id: string;
@@ -227,7 +228,8 @@ export default function ChatPage() {
       (messages.length > 0 || aiMessages.length > 0) &&
       messagesEndRef.current
     ) {
-      messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
+      //fix3
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages, aiMessages, isInitialLoad]); // Added isInitialLoad to dependencies
 
@@ -263,19 +265,13 @@ export default function ChatPage() {
                 id: `${chat.id}-user`,
                 type: "user",
                 message: chat.userMessage,
-                time: new Date(chat.createdAt).toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                }),
+                time: relativeTime(chat.createdAt),
               },
               {
                 id: `${chat.id}-ai`,
                 type: "ai",
                 message: formatAiResponse(chat),
-                time: new Date(chat.createdAt).toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                }),
+                time: relativeTime(chat.createdAt),
                 aiData: chat,
               },
             ])
@@ -320,16 +316,13 @@ export default function ChatPage() {
   const handleClearAiChat = async () => {
     try {
       await axios.delete(`${url}/ai-chat/history`, { withCredentials: true });
-      setAiMessages([
+        setAiMessages([
         {
           id: "welcome",
           type: "ai",
           message:
             "Chat cleared. Hello! I'm CareXpert AI. Describe your symptoms and I'll help analyze them for you.",
-          time: new Date().toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          }),
+          time: relativeTime(new Date()),
         },
       ]);
       toast.success("AI chat cleared");
@@ -348,26 +341,24 @@ export default function ChatPage() {
         id: `user-${Date.now()}`,
         type: "user",
         message: userMessage,
-        time: new Date().toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
+        time: relativeTime(new Date()),
       };
       setAiMessages((prev) => [...prev, userMsg]);
 
       // Clear the input immediately
       setMessage("");
-
+//fix5
       const response = await axios.post(
-        `${url}/ai-chat/process`,
-        {
-          symptoms: userMessage,
-          language: selectedLanguage,
-        },
-        {
-          withCredentials: true,
-        }
-      );
+  `${url}/ai-chat/process`,
+  {
+    symptoms: userMessage,
+    language: selectedLanguage,
+  },
+  {
+    withCredentials: true,
+    timeout: 15000
+  }
+);
 
       if (response.data.success) {
         const aiData = response.data.data;
@@ -375,10 +366,7 @@ export default function ChatPage() {
           id: `ai-${Date.now()}`,
           type: "ai",
           message: formatAiResponse(aiData),
-          time: new Date().toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          }),
+          time: relativeTime(new Date()),
           aiData: aiData,
         };
         setAiMessages((prev) => [...prev, aiMsg]);
@@ -393,10 +381,7 @@ export default function ChatPage() {
         type: "ai",
         message:
           "Sorry, I'm having trouble processing your request. Please try again.",
-        time: new Date().toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
+        time: relativeTime(new Date()),
       };
       setAiMessages((prev) => [...prev, errorMsg]);
     } finally {
@@ -457,10 +442,7 @@ export default function ChatPage() {
           receiverId: msg.receiverId,
           username: msg.sender.name,
           text: msg.message,
-          time: new Date(msg.timestamp).toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          }),
+          time: relativeTime(msg.timestamp),
           messageType: msg.messageType,
           imageUrl: msg.imageUrl,
         }));
@@ -488,110 +470,96 @@ export default function ChatPage() {
     }
   };
 
-  // Load chat history and join room when selected chat changes
-  useEffect(() => {
-    const loadChatHistory = async () => {
-      console.log("ChatPage - User:", user);
-      console.log("ChatPage - Selected Chat:", selectedChat);
+// Load chat history and join room when selected chat changes
+useEffect(() => {
+  let isMounted = true;
 
+  const loadChatHistory = async () => {
+    if (!user) return;
+
+    try {
       if (
-        user &&
         typeof selectedChat === "object" &&
         selectedChat.type === "doctor"
       ) {
         const roomId = generateRoomId(user.id, selectedChat.data.userId);
         joinRoom(roomId);
 
-        try {
-          // Load 1-on-1 chat history
-          console.log(
-            "Loading chat history for doctor:",
-            selectedChat.data.userId
+        const historyResponse = await loadOneOnOneChatHistory(
+          selectedChat.data.userId
+        );
+
+        if (isMounted && historyResponse.success) {
+          const formattedMessages = historyResponse.data.messages.map(
+            (msg: any) => ({
+              roomId: roomId,
+              senderId: msg.senderId,
+              receiverId: msg.receiverId,
+              username: msg.sender.name,
+              text: msg.message,
+              time: new Date(msg.timestamp).toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              }),
+              messageType: msg.messageType,
+              imageUrl: msg.imageUrl,
+            })
           );
-          const historyResponse = await loadOneOnOneChatHistory(
-            selectedChat.data.userId
-          );
-          console.log("Chat history response:", historyResponse);
-          if (historyResponse.success) {
-            const formattedMessages = historyResponse.data.messages.map(
-              (msg: any) => ({
-                roomId: roomId,
-                senderId: msg.senderId,
-                receiverId: msg.receiverId,
-                username: msg.sender.name,
-                text: msg.message,
-                time: new Date(msg.timestamp).toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                }),
-                messageType: msg.messageType,
-                imageUrl: msg.imageUrl,
-              })
-            );
-            setMessages(formattedMessages);
-          }
-        } catch (error) {
-          console.error("Error loading doctor chat history:", error);
-          setMessages([]);
+          setMessages(formattedMessages);
         }
       } else if (
         typeof selectedChat === "object" &&
         selectedChat.type === "room"
       ) {
-        // Load city room history and join the exact server room id
-        // Join will happen after we know the room id from server
+        const historyResponse = await loadCityChatHistory(selectedChat.name);
 
-        try {
-          // Load city room chat history
-          const historyResponse = await loadCityChatHistory(selectedChat.name);
-          if (historyResponse.success) {
-            if (historyResponse.data?.room?.id) {
-              setActiveRoomId(historyResponse.data.room.id);
-              if (user) {
-                joinCommunityRoom(
-                  historyResponse.data.room.id,
-                  user.id,
-                  user.name
-                );
-              }
-            } else {
-              setActiveRoomId(selectedChat.id);
-              if (user) {
-                joinCommunityRoom(selectedChat.id, user.id, user.name);
-              }
-            }
-            const formattedMessages = historyResponse.data.messages.map(
-              (msg: any) => ({
-                roomId: historyResponse.data?.room?.id || selectedChat.id,
-                senderId: msg.senderId,
-                receiverId: null,
-                username: msg.sender.name,
-                text: msg.message,
-                time: new Date(msg.timestamp).toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                }),
-                messageType: msg.messageType,
-                imageUrl: msg.imageUrl,
-              })
-            );
-            setMessages(formattedMessages);
+        if (isMounted && historyResponse.success) {
+          const roomId =
+            historyResponse.data?.room?.id || selectedChat.id;
+
+          setActiveRoomId(roomId);
+
+          if (user) {
+            joinCommunityRoom(roomId, user.id, user.name);
           }
 
-          // Fetch community members
+          const formattedMessages = historyResponse.data.messages.map(
+            (msg: any) => ({
+              roomId: roomId,
+              senderId: msg.senderId,
+              receiverId: null,
+              username: msg.sender.name,
+              text: msg.message,
+              time: new Date(msg.timestamp).toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              }),
+              messageType: msg.messageType,
+              imageUrl: msg.imageUrl,
+            })
+          );
+
+          setMessages(formattedMessages);
+
           await fetchCommunityMembers(selectedChat.id);
-        } catch (error) {
-          console.error("Error loading city chat history:", error);
-          setMessages([]);
         }
       } else if (selectedChat === "ai") {
-        // Clear messages for AI chat to display mock data
         setMessages([]);
       }
-    };
+    } catch (error) {
+      if (isMounted) {
+        console.error("Error loading chat history:", error);
+        setMessages([]);
+      }
+    }
+  };
 
-    loadChatHistory();
-  }, [selectedChat, user]);
+  loadChatHistory();
+
+  return () => {
+    isMounted = false;
+  };
+}, [selectedChat, user]);
 
   const handleSendMessage = async () => {
     if (!message.trim() || !selectedChat || !user) return;
@@ -599,17 +567,14 @@ export default function ChatPage() {
     if (typeof selectedChat === "object" && selectedChat.type === "doctor") {
       const roomId = generateRoomId(user.id, selectedChat.data.userId);
 
-      const payload = {
+        const payload = {
         roomId,
         senderId: user.id,
         receiverId: selectedChat.data.userId,
         username: user.name,
         text: message.trim(),
         messageType: "TEXT",
-        time: new Date().toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
+        time: relativeTime(new Date()),
       };
 
       sendMessage(payload);
@@ -634,10 +599,7 @@ export default function ChatPage() {
         username: user.name,
         text: message.trim(),
         messageType: "TEXT",
-        time: new Date().toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
+        time: relativeTime(new Date()),
       };
       SendMessageToRoom(payload);
       setMessages((prev) => [...prev, { ...payload, type: "user" }]);
@@ -646,31 +608,33 @@ export default function ChatPage() {
   };
 
   // Listen for incoming messages
+  //Changed this for preventing duplicate listeners
   useEffect(() => {
-    const handleIncomingMessage = (msg: FormattedMessage) => {
-      if (msg.senderId === user?.id) return;
-      if (
-        typeof selectedChat === "object" &&
-        selectedChat.type === "doctor" &&
-        generateRoomId(user?.id || "", selectedChat.data.userId) === msg.roomId
-      ) {
-        setMessages((prev) => [...prev, msg]);
-      } else if (
-        typeof selectedChat === "object" &&
-        selectedChat.type === "room" &&
-        selectedChat.id === msg.roomId
-      ) {
-        setMessages((prev) => [...prev, msg]);
-      }
-    };
+  const handleIncomingMessage = (msg: FormattedMessage) => {
+    if (msg.senderId === user?.id) return;
 
-    onMessage(handleIncomingMessage);
+    if (
+      typeof selectedChat === "object" &&
+      selectedChat.type === "doctor" &&
+      generateRoomId(user?.id || "", selectedChat.data.userId) === msg.roomId
+    ) {
+      setMessages((prev) => [...prev, msg]);
+    } else if (
+      typeof selectedChat === "object" &&
+      selectedChat.type === "room" &&
+      selectedChat.id === msg.roomId
+    ) {
+      setMessages((prev) => [...prev, msg]);
+    }
+  };
 
-    return () => {
-      offMessage();
-    };
-  }, [selectedChat, user]);
+  onMessage(handleIncomingMessage);
 
+  return () => {
+    offMessage(handleIncomingMessage);
+  };
+}, [selectedChat, user]);
+  
   return (
     <div className="h-[calc(100%-1rem)] overflow-hidden flex flex-col mt-4">
       {/* Mobile Header */}
@@ -893,9 +857,7 @@ export default function ChatPage() {
                                   {conversation.lastMessage.message}
                                 </p>
                                 <p className="text-xs text-gray-400 dark:text-gray-500">
-                                  {new Date(
-                                    conversation.lastMessage.timestamp
-                                  ).toLocaleDateString()}
+                                  {relativeTime(conversation.lastMessage.timestamp)}
                                 </p>
                               </div>
                               {conversation.unreadCount > 0 && (
@@ -1174,18 +1136,23 @@ export default function ChatPage() {
                         </div>
                       </div>
                     ))}
-                    {isAiLoading && (
-                      <div className="flex justify-start mb-4">
-                        <div className="bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white p-3 rounded-lg max-w-[80%]">
-                          <div className="flex items-center gap-2">
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-600"></div>
-                            <span className="text-sm">
-                              AI is analyzing your symptoms...
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    )}
+                    {/*fix4*/ }
+                  {isAiLoading && (
+  <div className="flex justify-start mb-4">
+    <div className="bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white p-3 rounded-lg max-w-[80%]">
+      <div className="flex items-center gap-2">
+        <div className="flex space-x-1">
+          <div className="w-2 h-2 bg-purple-600 rounded-full animate-bounce"></div>
+          <div className="w-2 h-2 bg-purple-600 rounded-full animate-bounce delay-100"></div>
+          <div className="w-2 h-2 bg-purple-600 rounded-full animate-bounce delay-200"></div>
+        </div>
+        <span className="text-sm">
+          AI is analyzing...
+        </span>
+      </div>
+    </div>
+  </div>
+)}
                   </>
                 )}
                 {/* doctor and community chats */}
@@ -1340,20 +1307,31 @@ export default function ChatPage() {
             {/* Message Input */}
             <div className="border-t p-4">
               <div className="flex gap-2">
+                
+                {/* fix2 */}
                 <Input
-                  placeholder="Type your message..."
-                  value={message}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    setMessage(e.target.value)
-                  }
-                  onKeyPress={(e: React.KeyboardEvent<HTMLInputElement>) =>
-                    e.key === "Enter" && handleSendMessage()
-                  }
-                  className="flex-1"
-                />
-                <Button onClick={handleSendMessage} className="px-6">
-                  <Send className="h-4 w-4" />
-                </Button>
+  placeholder="Type your message..."
+  value={message}
+  disabled={selectedChat === "ai" && isAiLoading}
+  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+    setMessage(e.target.value)
+  }
+  onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && !isAiLoading) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  }}
+  className="flex-1"
+/>
+                {/* fix1 */}
+               <Button
+  onClick={handleSendMessage}
+  className="px-6"
+  disabled={!message.trim() || (selectedChat === "ai" && isAiLoading)}
+>
+  <Send className="h-4 w-4" />
+</Button>
               </div>
             </div>
           </Card>
