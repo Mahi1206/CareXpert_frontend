@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuthStore } from "@/store/authstore";
 import { Loader2 } from "lucide-react";
-import { connectSocket } from "@/sockets/socket";
+import { connectSocket, disconnectSocket } from "@/sockets/socket";
 
 export default function ProtectedRoute() {
   const user = useAuthStore((state) => state.user);
@@ -12,6 +12,11 @@ export default function ProtectedRoute() {
   useEffect(() => {
     if (user) {
       connectSocket();
+      // Disconnect when the protected route unmounts or the user is cleared,
+      // preventing orphaned socket connections and memory leaks.
+      return () => {
+        disconnectSocket();
+      };
     }
   }, [user]);
 
