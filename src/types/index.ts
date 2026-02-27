@@ -49,7 +49,7 @@ export interface Pharmacy {
   openTime?: string;
   closeTime?: string;
   isOpen: boolean;
-  services: string[];
+  services?: string[];
   latitude?: number;
   longitude?: number;
 }

@@ -10,6 +10,7 @@
  * 6. Error handling with toast notifications
  */
 import { useState, useEffect, useCallback } from "react";
+import axios from "axios";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -64,6 +65,13 @@ const checkIsOpen = (hours: string): boolean => {
     const openTimeMinutes = openHour * 60 + openMinute;
     const closeTimeMinutes = closeHour * 60 + closeMinute;
 
+    // Handle schedules that span midnight (e.g., "10:00 PM - 2:00 AM")
+    if (closeTimeMinutes < openTimeMinutes) {
+      // Open from openTime to midnight, and from midnight to closeTime
+      return currentTimeMinutes >= openTimeMinutes || currentTimeMinutes < closeTimeMinutes;
+    }
+
+    // Same-day schedule
     return currentTimeMinutes >= openTimeMinutes && currentTimeMinutes < closeTimeMinutes;
   } catch {
     return true; // Default to open on error
@@ -116,6 +124,7 @@ export default function PharmacyPage() {
   const [locationStatus, setLocationStatus] = useState<"pending" | "granted" | "denied" | "unavailable">("pending");
   const [selectedPharmacy, setSelectedPharmacy] = useState<Pharmacy | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [debouncedSearch, setDebouncedSearch] = useState("");
 
   /**
    * Fetch pharmacies from backend API
@@ -154,8 +163,11 @@ export default function PharmacyPage() {
       }
     } catch (err) {
       console.error("Failed to fetch pharmacies:", err);
-      setError("Failed to load pharmacies. Please try again.");
-      notify.error("Failed to load pharmacies");
+      if (axios.isAxiosError(err) && err.response) {
+        setError(err.response.data?.message || "Failed to load pharmacies. Please try again.");
+      } else {
+        setError("Failed to load pharmacies. Please try again.");
+      }
       setPharmacies([]);
     } finally {
       setIsLoading(false);
@@ -182,8 +194,30 @@ export default function PharmacyPage() {
       },
       (error) => {
         console.warn("Geolocation error:", error.message);
-        setLocationStatus("denied");
-        notify.info("Location access denied. Showing all pharmacies.");
+        let status: "denied" | "unavailable" = "unavailable";
+        let message = "Unable to access location. Showing all pharmacies.";
+
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            status = "denied";
+            message = "Location access denied. Showing all pharmacies.";
+            break;
+          case error.POSITION_UNAVAILABLE:
+            status = "unavailable";
+            message = "Location unavailable. Showing all pharmacies.";
+            break;
+          case error.TIMEOUT:
+            status = "unavailable";
+            message = "Location request timed out. Showing all pharmacies.";
+            break;
+          default:
+            status = "unavailable";
+            message = "Unable to access location. Showing all pharmacies.";
+            break;
+        }
+
+        setLocationStatus(status);
+        notify.info(message);
         fetchPharmacies();
       },
       {
@@ -196,26 +230,31 @@ export default function PharmacyPage() {
 
   /**
    * Handle search with debounce
+   * First effect: update debouncedSearch after a delay when searchQuery changes
    */
   useEffect(() => {
     const debounceTimer = setTimeout(() => {
-      if (searchQuery.trim()) {
-        fetchPharmacies(userLocation?.lat, userLocation?.lng, searchQuery);
-      } else if (locationStatus !== "pending") {
-        fetchPharmacies(userLocation?.lat, userLocation?.lng);
-      }
+      setDebouncedSearch(searchQuery);
     }, 300);
 
     return () => clearTimeout(debounceTimer);
-  }, [searchQuery, userLocation, locationStatus, fetchPharmacies]);
+  }, [searchQuery]);
 
   /**
-   * Filter pharmacies client-side (in addition to server-side search)
+   * Second effect: fetch pharmacies based on debouncedSearch and location
    */
-  const filteredPharmacies = pharmacies.filter(pharmacy =>
-    pharmacy.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    pharmacy.address.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  useEffect(() => {
+    if (debouncedSearch.trim()) {
+      fetchPharmacies(userLocation?.lat, userLocation?.lng, debouncedSearch);
+    } else if (locationStatus !== "pending") {
+      fetchPharmacies(userLocation?.lat, userLocation?.lng);
+    }
+  }, [debouncedSearch, userLocation, locationStatus, fetchPharmacies]);
+
+  /**
+   * Use pharmacies as returned from the server (search handled server-side)
+   */
+  const filteredPharmacies = pharmacies;
 
   /**
    * Handle Call button click
@@ -236,7 +275,7 @@ export default function PharmacyPage() {
       ? `https://www.google.com/maps/dir/?api=1&origin=${userLocation.lat},${userLocation.lng}&destination=${destination}`
       : `https://www.google.com/maps/search/?api=1&query=${destination}`;
     
-    window.open(mapsUrl, "_blank", "noopener,noreferrer");
+    window.open(mapsUrl, "_blank");
   };
 
   /**
@@ -286,7 +325,7 @@ export default function PharmacyPage() {
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10"
           />
-          {isLoading && searchQuery && (
+          {isLoading && (
             <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 animate-spin text-gray-400" />
           )}
         </div>
@@ -373,7 +412,7 @@ export default function PharmacyPage() {
               </div>
 
               <div className="flex flex-wrap gap-2 mb-4">
-                {pharmacy.services.map((service, index) => (
+                {pharmacy.services?.map((service, index) => (
                   <Badge key={index} variant="outline" className="text-xs">
                     {service}
                   </Badge>
@@ -450,7 +489,7 @@ export default function PharmacyPage() {
                 <div className="space-y-2">
                   <p className="text-sm text-gray-500 dark:text-gray-400">Services</p>
                   <div className="flex flex-wrap gap-2">
-                    {selectedPharmacy.services.map((service, index) => (
+                    {selectedPharmacy.services?.map((service, index) => (
                       <Badge key={index} variant="outline">
                         {service}
                       </Badge>
